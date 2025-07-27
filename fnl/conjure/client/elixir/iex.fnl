@@ -17,7 +17,6 @@
      {:command "iex"
       :mix_command "iex -S mix"
       :prompt_pattern "iex(%d+)> "
-      :error_pattern "pry(main)>"
       }}}})
 
 (when (config.get-in [:mapping :enable_defaults])
@@ -31,18 +30,21 @@
 
 (local cfg (config.get-in-fn [:client :elixir :iex]))
 (local state (client.new-state #(do {:repl nil})))
-(set M.buf-suffix ".exs")
+(set M.buf-suffix ".ex")
 (set M.comment-prefix "# ")
 
 (fn M.form-node? [node]
   (log.dbg (.. "M.form-node?: node:type = " (a.pr-str (node:type))))
   (log.dbg (.. "M.form-node?: node:parent = " (a.pr-str (node:parent))))
   (let [parent (node:parent)]
-    (if (= "expression_statement" (node:type)) true
-        (= "alias_statement" (node:type)) true
-        (= "import_statement" (node:type)) true
-        (= "module_definition" (node:type)) true
-        (= "function_definition" (node:type)) true
+    (if (= "call" (node:type)) true
+        (= "binary_operator" (node:type)) true
+        (= "integer" (node:type)) true
+        (= "char" (node:type)) true
+        (= "sigil" (node:type)) true
+        (= "float" (node:type)) true
+        (= "string" (node:type)) true
+        (= "atom" (node:type)) true
         false)))
 
 (fn with-repl-or-warn [f opts]
@@ -54,6 +56,9 @@
                        "Start REPL with "
                        (config.get-in [:mapping :prefix])
                        (cfg [:mapping :start]))]))))
+
+(fn prep-code [s]
+  (.. s "\n"))
 
 (fn M.unbatch [msgs]
   (->> msgs
@@ -81,11 +86,21 @@
   (M.eval-str (a.assoc opts :code (a.slurp opts.file-path))))
 
 (fn display-repl-status [status]
-  ( log.append
+  (log.append
     [(.. M.comment-prefix
          (cfg [:command])
          " (" (or status "no status") ")")]
     {:break? true}))
+
+(fn display-result [msg]
+  (->> msg
+       (a.map #(.. M.comment-prefix $1))
+       log.append))
+
+(fn format-msg [msg]
+  (->> (str.split msg "\n")
+       (a.filter #(not (= "" $1)))
+       (a.filter #(not (= "()" $1)))))
 
 (fn M.stop []
   (let [repl (state :repl)]
@@ -119,30 +134,41 @@
         (state) :repl
         (stdio.start
           {:prompt-pattern (cfg [:prompt_pattern])
-           :error-pattern (cfg [:error_pattern])
            :cmd (if (M.is-mix-project?)
-                  (cfg [:mix_command])
-                  (cfg [:command]))
+                  (do  
+                    (log.append [(.. M.comment-prefix "Using iex mix mode")])
+                    (cfg [:mix_command]))
+                  (do  
+                    (log.append [(.. M.comment-prefix "Using iex standalone mode")]) 
+                    (cfg [:command])))
 
-           :on-success
-           (fn []
-             (display-repl-status :started))
+         :on-success
+         (fn []
+           (display-repl-status :started)
+           (with-repl-or-warn
+             (fn [repl]
+               (repl.send
+                 (prep-code ":help")
+                 (fn [msgs]
+                   (display-result (-> msgs M.unbatch format-msg)))
+                 {:batch? true}))))
 
-           :on-error
-           (fn [err]
-             (display-repl-status err))
+         :on-error
+         (fn [err]
+           (log.append ["error"])
+           (display-repl-status err))
 
-           :on-exit
-           (fn [code signal]
-             (when (and (= :number (type code)) (> code 0))
-               (log.append [(.. M.comment-prefix "process exited with code " code)]))
-             (when (and (= :number (type signal)) (> signal 0))
-               (log.append [(.. M.comment-prefix "process exited with signal " signal)]))
-             (M.stop))
+         :on-exit
+         (fn [code signal]
+           (when (and (= :number (type code)) (> code 0))
+             (log.append [(.. M.comment-prefix "process exited with code " code)]))
+           (when (and (= :number (type signal)) (> signal 0))
+             (log.append [(.. M.comment-prefix "process exited with signal " signal)]))
+           (M.stop))
 
-           :on-stray-output
-           (fn [msg]
-             (log.dbg (-> [msg] M.unbatch) {:join-first? true}))})))))
+         :on-stray-output
+         (fn [msg]
+           (log.dbg (-> [msg] M.unbatch) {:join-first? true}))})))))
 
 (fn M.on-exit []
   (M.stop))
