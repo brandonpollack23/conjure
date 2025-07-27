@@ -1,0 +1,57 @@
+*conjure-client-elixir-stdio*
+
+                                                           *conjure-elixir*
+
+==============================================================================
+Elixir over stdio                                             *conjure-elixir-stdio*
+
+Works with Elixir projects that use Mix as well as standalone Elixir files.
+
+You must have the Elixir binary in your PATH, you can check this with
+`:!which iex`.
+
+- Filetypes: `elixir`
+- Language: `elixir`
+- Transport: `stdio`
+
+------------------------------------------------------------------------------
+Usage~
+
+When you open an `elixir` file, Conjure will be ready to go.
+
+If you are in a Mix project (a `mix.exs` file is found in the current
+working directory), Conjure will use `iex -S mix` to start the REPL.
+Otherwise, it will use `iex`.
+
+You can start the REPL with `<prefix>cs`.
+
+------------------------------------------------------------------------------
+Mappings~
+
+`conjure-client-elixir-stdio.txt` mappings are all prefixed with the general
+Conjure prefix, see |g:conjure#mapping#prefix|.
+
+`ElixirStart` *<prefix>cs*
+Start the Elixir REPL.
+
+`ElixirStop` *<prefix>cS*
+Stop the Elixir REPL.
+
+`ElixirInterrupt` *<prefix>ei*
+Interrupt the current evaluation.
+
+------------------------------------------------------------------------------
+Configuration~
+
+You can configure the command used to start the REPL with the following
+variables.
+
+`g:conjure#client#elixir#iex#command`
+The command to start the Elixir REPL.
+Default: `iex`
+
+`g:conjure#client#elixir#iex#mix_command`
+The command to start the Elixir REPL in a Mix project.
+Default: `iex -S mix`
+
+vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
