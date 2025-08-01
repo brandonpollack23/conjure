@@ -69,7 +69,7 @@
               :rust :conjure.client.rust.evcxr
               :sql :conjure.client.sql.stdio
               :php :conjure.client.php.psysh
-              :elixir :conjure.client.elixir.iex}
+              :elixir :conjure.client.elixir.stdio}
    :filetype_suffixes {:racket [:rkt]
                        :scheme [:scm :ss]
                        :elixir [:ex :exs]}

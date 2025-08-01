@@ -8,27 +8,30 @@
 (local log (autoload :conjure.log))
 (local ts (autoload :conjure.tree-sitter))
 
-(local M (define :conjure.client.elixir.iex))
+(local M (define :conjure.client.elixir.stdio))
+
+; Future work: add the ability to explore elixir processes with iex commands (via a separate job, started n the C-g menu)
+; Future work: add the ability to run multiple jobs via iex C-g menu.
 
 (config.merge
   {:client
    {:elixir
-    {:iex
+    {:stdio
      {:command "iex"
       :mix_command "iex -S mix"
-      :prompt_pattern "iex%(%d+%)> "
+      :prompt_pattern "iex%(.*%d+%)> "
       }}}})
 
 (when (config.get-in [:mapping :enable_defaults])
   (config.merge
     {:client
      {:elixir
-      {:iex
+      {:stdio
        {:mapping {:start "cs"
                   :stop "cS"
                   :interrupt "ei"}}}}}))
 
-(local cfg (config.get-in-fn [:client :elixir :iex]))
+(local cfg (config.get-in-fn [:client :elixir :stdio]))
 (local state (client.new-state #(do {:repl nil})))
 (set M.buf-suffix ".ex")
 (set M.comment-prefix "# ")
@@ -37,14 +40,22 @@
   (log.dbg (.. "M.form-node?: node:type = " (a.pr-str (node:type))))
   (log.dbg (.. "M.form-node?: node:parent = " (a.pr-str (node:parent))))
   (let [parent (node:parent)]
-    (if (= "call" (node:type)) true
+    (if (= (parent:type) "source") true
+        (= "identifier" (node:type)) true
+        (= "unary_operator" (node:type)) true
         (= "binary_operator" (node:type)) true
+        (= "sigil" (node:type)) true
+        (= "map" (node:type)) true
+        (= "list" (node:type)) true
+        (= "nil" (node:type)) true
         (= "integer" (node:type)) true
         (= "char" (node:type)) true
         (= "sigil" (node:type)) true
         (= "float" (node:type)) true
         (= "string" (node:type)) true
+        (= "charlist" (node:type)) true
         (= "atom" (node:type)) true
+        (= "call" (node:type)) true
         false)))
 
 (fn with-repl-or-warn [f opts]
@@ -177,7 +188,8 @@
   (with-repl-or-warn
     (fn [repl]
       (log.append [(.. M.comment-prefix " Sending interrupt signal.")] {:break? true})
-      (repl.send-signal :sigint))))
+      ; send C-g, the alert character, then "i\n" for interrupt and finally "c\n" for continue
+      (repl.send "\ai\nc\n" nil {:batch? false}))))
 
 (fn M.on-load []
   (when (config.get-in [:client_on_load])

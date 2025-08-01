@@ -10,6 +10,9 @@ Works with Elixir projects that use Mix as well as standalone Elixir files.
 You must have the Elixir binary in your PATH, you can check this with
 `:!which iex`.
 
+Note that if you override your default prompt, this will not work without editing the 
+prompt pattern (see |g:conjure#client#elixir#stdio#prompt_pattern|).
+
 - Filetypes: `elixir`
 - Language: `elixir`
 - Transport: `stdio`
@@ -46,12 +49,16 @@ Configuration~
 You can configure the command used to start the REPL with the following
 variables.
 
-`g:conjure#client#elixir#iex#command`
+`g:conjure#client#elixir#stdio#command`
 The command to start the Elixir REPL.
 Default: `iex`
 
-`g:conjure#client#elixir#iex#mix_command`
+`g:conjure#client#elixir#stdio#mix_command`
 The command to start the Elixir REPL in a Mix project.
 Default: `iex -S mix`
+
+`g:conjure#client#elixir#stdio#prompt_pattern`
+The prompt pattern to use for the Elixir REPL.
+Default: `iex%(.*%d+%)> `
 
 vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:

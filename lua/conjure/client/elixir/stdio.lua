@@ -10,13 +10,13 @@ local mapping = autoload("conjure.mapping")
 local client = autoload("conjure.client")
 local log = autoload("conjure.log")
 local ts = autoload("conjure.tree-sitter")
-local M = define("conjure.client.elixir.iex")
-config.merge({client = {elixir = {iex = {command = "iex", mix_command = "iex -S mix", prompt_pattern = "iex%(%d+%)> "}}}})
+local M = define("conjure.client.elixir.stdio")
+config.merge({client = {elixir = {stdio = {command = "iex", mix_command = "iex -S mix", prompt_pattern = "iex%(.*%d+%)> "}}}})
 if config["get-in"]({"mapping", "enable_defaults"}) then
-  config.merge({client = {elixir = {iex = {mapping = {start = "cs", stop = "cS", interrupt = "ei"}}}}})
+  config.merge({client = {elixir = {stdio = {mapping = {start = "cs", stop = "cS", interrupt = "ei"}}}}})
 else
 end
-local cfg = config["get-in-fn"]({"client", "elixir", "iex"})
+local cfg = config["get-in-fn"]({"client", "elixir", "stdio"})
 local state
 local function _3_()
   return {repl = nil}
@@ -28,9 +28,21 @@ M["form-node?"] = function(node)
   log.dbg(("M.form-node?: node:type = " .. a["pr-str"](node:type())))
   log.dbg(("M.form-node?: node:parent = " .. a["pr-str"](node:parent())))
   local parent = node:parent()
-  if ("call" == node:type()) then
+  if (parent:type() == "source") then
+    return true
+  elseif ("identifier" == node:type()) then
+    return true
+  elseif ("unary_operator" == node:type()) then
     return true
   elseif ("binary_operator" == node:type()) then
+    return true
+  elseif ("sigil" == node:type()) then
+    return true
+  elseif ("map" == node:type()) then
+    return true
+  elseif ("list" == node:type()) then
+    return true
+  elseif ("nil" == node:type()) then
     return true
   elseif ("integer" == node:type()) then
     return true
@@ -42,7 +54,11 @@ M["form-node?"] = function(node)
     return true
   elseif ("string" == node:type()) then
     return true
+  elseif ("charlist" == node:type()) then
+    return true
   elseif ("atom" == node:type()) then
+    return true
+  elseif ("call" == node:type()) then
     return true
   else
     return false
@@ -183,7 +199,7 @@ end
 M.interrupt = function()
   local function _28_(repl)
     log.append({(M["comment-prefix"] .. " Sending interrupt signal.")}, {["break?"] = true})
-    return repl["send-signal"]("sigint")
+    return repl.send("\7i\nc\n", nil, {["batch?"] = false})
   end
   return with_repl_or_warn(_28_)
 end
