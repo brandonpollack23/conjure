@@ -16,7 +16,7 @@
     {:iex
      {:command "iex"
       :mix_command "iex -S mix"
-      :prompt_pattern "iex(%d+)> "
+      :prompt_pattern "iex%(%d+%)> "
       }}}})
 
 (when (config.get-in [:mapping :enable_defaults])

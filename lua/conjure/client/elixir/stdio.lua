@@ -1,4 +1,4 @@
--- [nfnl] fnl/conjure/client/elixir/iex.fnl
+-- [nfnl] fnl/conjure/client/elixir/stdio.fnl
 local _local_1_ = require("conjure.nfnl.module")
 local autoload = _local_1_["autoload"]
 local define = _local_1_["define"]
@@ -11,7 +11,7 @@ local client = autoload("conjure.client")
 local log = autoload("conjure.log")
 local ts = autoload("conjure.tree-sitter")
 local M = define("conjure.client.elixir.iex")
-config.merge({client = {elixir = {iex = {command = "iex", mix_command = "iex -S mix", prompt_pattern = "iex(%d+)> "}}}})
+config.merge({client = {elixir = {iex = {command = "iex", mix_command = "iex -S mix", prompt_pattern = "iex%(%d+%)> "}}}})
 if config["get-in"]({"mapping", "enable_defaults"}) then
   config.merge({client = {elixir = {iex = {mapping = {start = "cs", stop = "cS", interrupt = "ei"}}}}})
 else
